@@ -37,8 +37,14 @@ if(process.env.OPERATION==='restore-version') {
   console.log('INDEPENDENT_CONTAINER_OPERATION',process.env.OPERATION,image);
  } finally {rmSync(dir,{recursive:true,force:true});rmSync(auth,{recursive:true,force:true});}
 } else if(process.env.OPERATION==='delete') {
- const r=await fetch('https://api.github.com/orgs/fabric-platform-e2e/packages/npm/'+name,{method:'DELETE',headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json'}});
- assert.ok(r.status===204||r.status===404,'Package cleanup failed '+r.status);console.log('PACKAGE_CLEANED',name);
+ const headers={Authorization:'Bearer '+token,Accept:'application/vnd.github+json'};
+ for(const [type,packageName] of [['npm',name],['container',name+'-container'],['maven','dev.actionsfabric.'+name+'-snapshot']]) {
+  const url='https://api.github.com/orgs/fabric-platform-e2e/packages/'+type+'/'+encodeURIComponent(packageName);
+  const before=await fetch(url,{headers});assert.ok([200,404].includes(before.status));
+  if(before.status===200) {const metadata=await before.json();assert.equal(metadata.repository?.full_name,repo,'Refuse to delete a package outside this fixture repository');const removed=await fetch(url,{method:'DELETE',headers});assert.equal(removed.status,204);}
+  const after=await fetch(url,{headers});assert.equal(after.status,404);console.log('PACKAGE_CLEANED',type,packageName);
+ }
+
 } else {
  const dir='.package-test';mkdirSync(dir,{recursive:true});
  const version=process.env.OPERATION==='publish'?'1.0.0':'1.0.1';
