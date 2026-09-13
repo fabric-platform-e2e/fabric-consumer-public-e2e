@@ -1,0 +1,14 @@
+name: Fabric queue recovery validation
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: actions-fabric-linux-x64
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: node --test platform-fixture/ledger.test.mjs
+      - run: node -e "console.log('QUEUE_RECOVERY_VERIFIED')"
