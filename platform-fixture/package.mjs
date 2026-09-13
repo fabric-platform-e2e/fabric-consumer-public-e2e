@@ -16,7 +16,8 @@ if(process.env.OPERATION==='delete') {
  writeFileSync(dir+'/index.js','module.exports = (a,b) => a+b;\n');
  writeFileSync(dir+'/.npmrc','//npm.pkg.github.com/:_authToken='+token+'\n');
  try {
-  const r=spawnSync('npm',['publish','--registry=https://npm.pkg.github.com'],{cwd:dir,encoding:'utf8'});
+  const args=process.env.OPERATION==='retag'?['dist-tag','add','@fabric-platform-e2e/'+name+'@1.0.0','fabric-stable','--registry=https://npm.pkg.github.com']:['publish','--registry=https://npm.pkg.github.com'];
+  const r=spawnSync('npm',args,{cwd:dir,encoding:'utf8'});
   // Keep credentials out of diagnostics, including unexpected client errors.
   console.log((r.stdout??'').split(token).join('***'));console.log((r.stderr??'').split(token).join('***'));
   assert.equal(r.status,0,'Publishing failed');console.log('INDEPENDENT_PACKAGE_PUBLISHED',name,version);
