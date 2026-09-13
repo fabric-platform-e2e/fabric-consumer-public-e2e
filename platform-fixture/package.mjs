@@ -6,7 +6,20 @@ assert.ok(token?.startsWith('ghp_'));
 const repo=process.env.GITHUB_REPOSITORY;
 assert.ok(repo.startsWith('fabric-platform-e2e/fabric-consumer-'));
 const name='fabric-native-events-'+(repo.includes('private')?'private':'public');
-if(process.env.OPERATION==='delete') {
+if(process.env.OPERATION.startsWith('container-')) {
+ const dir='.fabric-container-build',auth='.fabric-container-auth';mkdirSync(dir,{recursive:true});mkdirSync(auth,{recursive:true});
+ const env={...process.env,DOCKER_CONFIG:process.cwd()+'/'+auth};
+ const image='ghcr.io/fabric-platform-e2e/'+name+'-container';
+ function docker(args,input) {const r=spawnSync('docker',args,{env,input,encoding:'utf8'});if(r.status!==0)console.log((r.stderr??'').split(token).join('***'));assert.equal(r.status,0,'Container operation failed');}
+ try {
+  docker(['login','ghcr.io','--username','yeastyiodine0l','--password-stdin'],token);
+  if(process.env.OPERATION==='container-publish') {
+   writeFileSync(dir+'/Dockerfile','FROM scratch\nLABEL org.opencontainers.image.source="https://github.com/'+repo+'"\nCOPY artifact.txt /artifact.txt\n');writeFileSync(dir+'/artifact.txt','Fabric native event fixture\n');
+   docker(['build','-t',image+':initial',dir]);docker(['push',image+':initial']);
+  } else {docker(['pull',image+':initial']);docker(['tag',image+':initial',image+':updated']);docker(['push',image+':updated']);}
+  console.log('INDEPENDENT_CONTAINER_OPERATION',process.env.OPERATION,image);
+ } finally {rmSync(dir,{recursive:true,force:true});rmSync(auth,{recursive:true,force:true});}
+} else if(process.env.OPERATION==='delete') {
  const r=await fetch('https://api.github.com/orgs/fabric-platform-e2e/packages/npm/'+name,{method:'DELETE',headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json'}});
  assert.ok(r.status===204||r.status===404,'Package cleanup failed '+r.status);console.log('PACKAGE_CLEANED',name);
 } else {
