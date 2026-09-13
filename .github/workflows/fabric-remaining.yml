@@ -1,0 +1,26 @@
+name: Fabric remaining event validation
+run-name: remaining-${{ github.event_name }}-${{ github.event.action || 'default' }}
+on:
+  check_run:
+    types: [rerequested, requested_action]
+  release:
+    types: [unpublished]
+  registry_package:
+    types: [published, updated]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        label: [actions-fabric-linux-x64, actions-fabric-windows-x64, actions-fabric-macos-x64]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: main
+      - run: node --test platform-fixture/ledger.test.mjs
+      - name: Validate native event context
+        run: node platform-fixture/remaining.mjs
