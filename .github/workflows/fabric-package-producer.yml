@@ -1,0 +1,24 @@
+name: Fabric independent package producer
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        required: true
+        options: [publish, update, delete]
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: actions-fabric-linux-x64
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate invoice implementation
+        run: node --test platform-fixture/ledger.test.mjs
+      - name: Publish with an independent user credential
+        env:
+          PACKAGE_TOKEN: ${{ secrets.FABRIC_PACKAGE_TEST_TOKEN }}
+          OPERATION: ${{ inputs.operation }}
+        run: node platform-fixture/package.mjs
