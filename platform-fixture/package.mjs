@@ -24,8 +24,8 @@ if(process.env.OPERATION==='maven-snapshot') {
  function docker(args,input) {const r=spawnSync('docker',args,{env,input,encoding:'utf8'});if(r.status!==0)console.log((r.stderr??'').split(token).join('***'));assert.equal(r.status,0,'Container operation failed');}
  try {
   docker(['login','ghcr.io','--username','yeastyiodine0l','--password-stdin'],token);
-  if(process.env.OPERATION==='container-publish') {
-   writeFileSync(dir+'/Dockerfile','FROM scratch\nLABEL org.opencontainers.image.source="https://github.com/'+repo+'"\nCOPY artifact.txt /artifact.txt\n');writeFileSync(dir+'/artifact.txt','Fabric native event fixture\n');
+  if(['container-publish','container-overwrite'].includes(process.env.OPERATION)) {
+   writeFileSync(dir+'/Dockerfile','FROM scratch\nLABEL org.opencontainers.image.source="https://github.com/'+repo+'"\nCOPY artifact.txt /artifact.txt\n');writeFileSync(dir+'/artifact.txt','Fabric native event fixture '+process.env.GITHUB_RUN_ID+'\n');
    docker(['build','-t',image+':initial',dir]);docker(['push',image+':initial']);
   } else {docker(['pull',image+':initial']);docker(['tag',image+':initial',image+':updated']);docker(['push',image+':updated']);}
   console.log('INDEPENDENT_CONTAINER_OPERATION',process.env.OPERATION,image);
