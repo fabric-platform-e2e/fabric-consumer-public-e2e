@@ -1,0 +1,16 @@
+name: Fabric check event positive control
+on:
+  check_run:
+    types: [created, completed]
+permissions:
+  contents: read
+jobs:
+  control:
+    runs-on: actions-fabric-linux-x64
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: main
+      - run: node --test platform-fixture/ledger.test.mjs
+      - run: node platform-fixture/remaining.mjs
