@@ -12,7 +12,7 @@ if(process.env.OPERATION==='delete') {
 } else {
  const dir='.package-test';mkdirSync(dir,{recursive:true});
  const version=process.env.OPERATION==='publish'?'1.0.0':'1.0.1';
- writeFileSync(dir+'/package.json',JSON.stringify({name:'@fabric-platform-e2e/'+name,version,description:'Actions Fabric synthetic native event validation',main:'index.js',repository:{type:'git',url:'https://github.com/'+repo+'.git'},publishConfig:{registry:'https://npm.pkg.github.com'}}));
+ writeFileSync(dir+'/package.json',JSON.stringify({name:'@fabric-platform-e2e/'+name,version,description:'Actions Fabric synthetic native event validation',main:'index.js',files:['index.js'],repository:{type:'git',url:'https://github.com/'+repo+'.git'},publishConfig:{registry:'https://npm.pkg.github.com'}}));
  writeFileSync(dir+'/index.js','module.exports = (a,b) => a+b;\n');
  writeFileSync(dir+'/.npmrc','//npm.pkg.github.com/:_authToken='+token+'\n');
  try {
