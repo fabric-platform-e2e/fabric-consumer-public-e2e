@@ -1,6 +1,7 @@
 name: Fabric remaining event validation
 run-name: remaining-${{ github.event_name }}-${{ github.event.action || 'default' }}
 on:
+  page_build: {}
   check_run:
     types: [rerequested, requested_action]
   release:
