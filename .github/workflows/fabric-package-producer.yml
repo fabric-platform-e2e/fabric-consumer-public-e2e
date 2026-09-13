@@ -5,7 +5,7 @@ on:
       operation:
         type: choice
         required: true
-        options: [publish, update, delete]
+        options: [publish, update, retag, delete]
 permissions:
   contents: read
 jobs:
