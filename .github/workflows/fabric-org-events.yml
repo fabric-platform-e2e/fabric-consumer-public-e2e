@@ -1,0 +1,32 @@
+name: Fabric organization events
+run-name: org-${{ github.event_name }}-${{ github.event.action }}-${{ github.event.issue.number || github.event.pull_request.number || 'group' }}
+on:
+  issues:
+    types: [typed, untyped, field_added, field_removed]
+  pull_request:
+    types: [enqueued, dequeued]
+  pull_request_target:
+    types: [enqueued, dequeued]
+  merge_group:
+    types: [checks_requested]
+permissions:
+  contents: read
+jobs:
+  event:
+    name: event (${{ matrix.label }})
+    runs-on: ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        label: [actions-fabric-linux-x64, actions-fabric-windows-x64, actions-fabric-macos-x64]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify invoice calculations in organization context
+        run: node --test platform-fixture/ledger.test.mjs
+      - name: Verify native organization event and runner platform
+        env:
+          EXPECTED_LABEL: ${{ matrix.label }}
+        run: node platform-fixture/event.mjs

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH,'utf8'));
+const labels = {linux:'actions-fabric-linux-x64',win32:'actions-fabric-windows-x64',darwin:'actions-fabric-macos-x64'};
+assert.equal(labels[process.platform],process.env.EXPECTED_LABEL);
+assert.equal(process.arch,'x64');
+assert.equal(event.repository.owner.id,328561380);
+assert.equal(event.repository.owner.type,'Organization');
+assert.equal(event.organization.id,328561380);
+assert.equal(event.repository.full_name,process.env.GITHUB_REPOSITORY);
+assert.equal(process.env.FABRIC_LEASE_ID,undefined);
+const allowed = {issues:['typed','untyped','field_added','field_removed'],pull_request:['enqueued','dequeued'],pull_request_target:['enqueued','dequeued'],merge_group:['checks_requested']};
+assert.ok(allowed[process.env.GITHUB_EVENT_NAME]?.includes(event.action));
+console.log('ORGANIZATION_EVENT_VALIDATED',JSON.stringify({event:process.env.GITHUB_EVENT_NAME,action:event.action,repository:event.repository.full_name,private:event.repository.private,organizationId:event.organization.id,issue:event.issue?.number,pr:event.pull_request?.number,platform:process.platform,arch:process.arch}));
