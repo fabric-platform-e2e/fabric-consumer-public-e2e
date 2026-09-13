@@ -6,7 +6,13 @@ assert.ok(token?.startsWith('ghp_'));
 const repo=process.env.GITHUB_REPOSITORY;
 assert.ok(repo.startsWith('fabric-platform-e2e/fabric-consumer-'));
 const name='fabric-native-events-'+(repo.includes('private')?'private':'public');
-if(process.env.OPERATION==='maven-snapshot') {
+if(process.env.OPERATION==='restore-version') {
+ const base='https://api.github.com/orgs/fabric-platform-e2e/packages/npm/'+name;
+ const headers={Authorization:'Bearer '+token,Accept:'application/vnd.github+json'};
+ const response=await fetch(base+'/versions',{headers});assert.equal(response.status,200);const versions=await response.json();const version=versions.find(v=>v.name==='1.0.0');assert.ok(version);
+ const removed=await fetch(base+'/versions/'+version.id,{method:'DELETE',headers});assert.equal(removed.status,204);
+ const restored=await fetch(base+'/versions/'+version.id+'/restore',{method:'POST',headers});assert.equal(restored.status,204);console.log('PACKAGE_VERSION_RESTORED',name,version.id);
+} else if(process.env.OPERATION==='maven-snapshot') {
  const dir='.fabric-maven';mkdirSync(dir+'/content',{recursive:true});
  writeFileSync(dir+'/content/probe.txt','Fabric snapshot '+process.env.GITHUB_RUN_ID+'\n');
  writeFileSync(dir+'/settings.xml','<settings><servers><server><id>github</id><username>yeastyiodine0l</username><password>'+token+'</password></server></servers></settings>',{mode:0o600});
