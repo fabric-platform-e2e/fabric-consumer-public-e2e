@@ -6,7 +6,18 @@ assert.ok(token?.startsWith('ghp_'));
 const repo=process.env.GITHUB_REPOSITORY;
 assert.ok(repo.startsWith('fabric-platform-e2e/fabric-consumer-'));
 const name='fabric-native-events-'+(repo.includes('private')?'private':'public');
-if(process.env.OPERATION.startsWith('container-')) {
+if(process.env.OPERATION==='maven-snapshot') {
+ const dir='.fabric-maven';mkdirSync(dir+'/content',{recursive:true});
+ writeFileSync(dir+'/content/probe.txt','Fabric snapshot '+process.env.GITHUB_RUN_ID+'\n');
+ writeFileSync(dir+'/settings.xml','<settings><servers><server><id>github</id><username>yeastyiodine0l</username><password>'+token+'</password></server></servers></settings>',{mode:0o600});
+ const artifact=name+'-snapshot';
+ writeFileSync(dir+'/pom.xml','<project><modelVersion>4.0.0</modelVersion><groupId>dev.actionsfabric</groupId><artifactId>'+artifact+'</artifactId><version>1.0-SNAPSHOT</version><distributionManagement><repository><id>github</id><url>https://maven.pkg.github.com/'+repo+'</url></repository></distributionManagement></project>');
+ try {
+  assert.equal(spawnSync('jar',['--create','--file',dir+'/probe.jar','-C',dir+'/content','.']).status,0);
+  const r=spawnSync('mvn',['-B','-s',dir+'/settings.xml','org.apache.maven.plugins:maven-deploy-plugin:3.1.4:deploy-file','-Dfile='+dir+'/probe.jar','-DpomFile='+dir+'/pom.xml','-DrepositoryId=github','-Durl=https://maven.pkg.github.com/'+repo],{encoding:'utf8'});
+  console.log((r.stdout??'').split(token).join('***'));console.log((r.stderr??'').split(token).join('***'));assert.equal(r.status,0,'Snapshot deployment failed');console.log('MAVEN_SNAPSHOT_DEPLOYED',artifact);
+ } finally {rmSync(dir,{recursive:true,force:true});}
+} else if(process.env.OPERATION.startsWith('container-')) {
  const dir='.fabric-container-build',auth='.fabric-container-auth';mkdirSync(dir,{recursive:true});mkdirSync(auth,{recursive:true});
  const env={...process.env,DOCKER_CONFIG:process.cwd()+'/'+auth};
  const image='ghcr.io/fabric-platform-e2e/'+name+'-container';
