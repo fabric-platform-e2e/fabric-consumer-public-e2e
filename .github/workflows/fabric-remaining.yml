@@ -6,7 +6,10 @@ on:
   release:
     types: [unpublished]
   registry_package:
-    types: [published, updated]
+    types: [updated]
+concurrency:
+  group: remaining-${{ github.event_name }}-${{ github.event.action || 'default' }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
