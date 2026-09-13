@@ -5,7 +5,7 @@ on:
       operation:
         type: choice
         required: true
-        options: [publish, update, retag, container-publish, container-update, maven-snapshot, delete]
+        options: [publish, update, retag, container-publish, container-update, container-overwrite, maven-snapshot, delete]
 permissions:
   contents: read
 jobs:
