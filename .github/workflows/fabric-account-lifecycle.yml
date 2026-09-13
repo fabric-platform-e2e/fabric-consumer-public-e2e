@@ -1,0 +1,41 @@
+name: Fabric App ownership lifecycle
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        required: true
+        options: [failure, tolerated, cancel]
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    name: lifecycle (${{ matrix.label }})
+    runs-on: ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        label: [actions-fabric-linux-x64, actions-fabric-windows-x64, actions-fabric-macos-x64]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Execute portable assertions before lifecycle test
+        run: node --test platform-fixture/ledger.test.mjs
+      - name: Hold for native cancellation
+        if: inputs.mode == 'cancel'
+        run: node -e "console.log('PLATFORM_CANCELLATION_READY');setTimeout(()=>process.exit(99),180000)"
+      - name: Expected validation failure
+        id: failure
+        if: inputs.mode != 'cancel'
+        continue-on-error: ${{ inputs.mode == 'tolerated' }}
+        run: node -e "require('node:fs').writeFileSync('platform-cleanup-marker','created');process.exit(1)"
+      - name: Verify always cleanup and failure outcome
+        if: always() && inputs.mode != 'cancel'
+        env:
+          OUTCOME: ${{ steps.failure.outcome }}
+          CONCLUSION: ${{ steps.failure.conclusion }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          node -e "const a=require('node:assert/strict'),f=require('node:fs');a.equal(f.readFileSync('platform-cleanup-marker','utf8'),'created');f.unlinkSync('platform-cleanup-marker');a.equal(process.env.OUTCOME,'failure');a.equal(process.env.CONCLUSION,process.env.MODE==='tolerated'?'success':'failure');console.log('PLATFORM_ALWAYS_CLEANUP_VERIFIED')"
